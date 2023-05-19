@@ -4,16 +4,11 @@ Repositorio del proyecto final de prácticas de la asignatura Inteligencia Ambie
 
 ## Estructura de ficheros
 
-- `config/`: Config
-  - `experiment/`: Config yaml files for different experiments
-  - `default.py`: Default config
-- `drone/`: Drone initialization and control
-- `models/`: Deep Learning models
-  - `segmentation/`: Segmentation models
-  - `traffic_light_classification/`: Traffic light classification models
-- `utils/`: Helper functions and scripts
-
-
+- `coco/`: Ficheros del modelo de detección de objetos
+- `semaforos/`: Ficheros del modelo de clasificación de semáforos
+- `tflite1-env/`: Entorno virtual
+- `get_requirements.sh`: Ejecutable para instalar dependencias
+- `main.py`: Fichero a ejecutar
 
 ## Hardware
 
@@ -25,93 +20,38 @@ No obstante, el código es flexible, por lo que puede modificarse para adaptarse
 
 ## Requisitos
 
-Python 3.7 o posterior con las bibliotecas recopiladas en [requirements.txt](./requirements.txt) instaladas, incluyendo `torch>=1.7`. 
-
-Para instalar las dependencias, basta con ejecutar el siguiente comando:
+Python 3.5 o posterior con las bibliotecas necesarias instaladas. Para instalarlas, basta con ejecutar el siguiente comando:
 
 ```bash
-pip install -r requirements.txt
+bash get_requirements.sh
 ```
-
-### SegFormer
-
-1. Install `mmcv-full`
-
-   To use [SegFormer](https://github.com/NVlabs/SegFormer), you need to install `mmcv-full==1.2.7`. For example, to install `mmcv-full==1.2.7` with `CUDA 11` and `PyTorch 1.7.0`, use the following command:
-
-   ```bash
-   pip install mmcv-full==1.2.7 -f https://download.openmmlab.com/mmcv/dist/cu110/torch1.7.0/index.html
-   ```
-
-   To install `mmcv-full` with different version of PyTorch and CUDA, please see: [MMCV Installation](https://mmcv.readthedocs.io/en/latest/get_started/installation.html).
-
-2. Use submodule `SegFormer` 
-
-   - Initialize the submodule(s):
-
-     ```bash
-     git submodule init
-     ```
-
-   - Run the update to pull down the files:
-
-     ```bash
-     git submodule update
-     ```
-
-3. Install the dependencies of `SegFormer`:
-
-   ```bash
-   pip install -e models/segmentation/SegFormer/ --user
-   ```
-
-4. Copy config file to `SegFormer/`
-
-   ```bash
-   cp models/segmentation/segformer.b0.768x768.mapillary.160k.py models/segmentation/SegFormer/local_configs/segformer/B0
-   ```
-
-
 
 ## Modelos
 
-Two types of models are used: **street view semantic segmentation** and **traffic lights classification**.
+Se han usado dos modelos en este proyecto: **Coco** y **Semaforos**.
 
-### Street view semantic segmentation
+### Coco
 
-We adopt SegFormer-B0 (trained on [Mapillary Vistas](https://www.mapillary.com/dataset/vistas) for 160K iterations) for street-view semantic segmentation based on each frame captured by the drone.
+Se trata del modelo [mobilenet](https://keras.io/api/applications/mobilenet/), entrenado con el conjunto de datos [COCO](https://cocodataset.org).
 
-### Traffic lights classification
+Este modelo tiene el propósito de detectar los objetos presentes en la imagen, haciendo posible filtrar para quedarnos únicamente con los semáforos que aparecen en la misma.
 
-We create a custom traffic lights dataset named **Pedestrian and Vehicle Traffic Lights (PVTL) Dataset** using traffic lights images cropped from  [Cityscapes](https://www.cityscapes-dataset.com/), [Mapillary Vistas](https://www.mapillary.com/dataset/vistas), and [PedestrianLights](https://www.uni-muenster.de/PRIA/en/forschung/index.shtml). The PVTL dataset can be downloaded from [Google Drive](https://drive.google.com/drive/folders/1UFcr-b4Ci5BsA72TZWJ77n-J3aneli6l?usp=sharing).
+### Semaforos
 
-It containes 5 classes: Others, Pedestrian-red, Pedestrian-green, Vehicle-red, and Vehicle-green. Each class contains about 300 images. Train-validation split is 3:1.
-
-<img src="assets/traffic_light_eg.png" alt="Traffic light dataset examples" style="zoom: 67%;" />
-
-We train 2 models on this dataset:
-
-- **ResNet-18**: We fine-tune ResNet-18 from `torchvision.models`. After 25 epochs training, the accuracy achieves around 90%.
-- **Simple CNN model**: We build our custom simple CNN model (5 CONV + 3 FC). After 25 epochs training, the accuracy achieves around 83%.
-
-### Pesos entrenados
-
-1. Create `weights` folder and its subfolder `segmentation` and `traffic_light_classification`
-
-   ```bash
-   mkdir -p weights/segmentation weights/traffic_light_classification
-   ```
-
-2. Download trained weights from [Google Drive](https://drive.google.com/drive/folders/1efvfGxh2f1nCppO9YaPn6SyUQjG--QkC?usp=sharing) and put them into corresponding folders
-
-    
+Se trata de una red neuronal con arquitectura [InceptionV3](https://cloud.google.com/tpu/docs/inception-v3-advanced?hl=es-419), entrenada con el conjunto de datos [imagenet](https://www.image-net.org/), y al que se ha hecho fine tuning con un [dataset de semáforos](https://drive.google.com/drive/folders/1UFcr-b4Ci5BsA72TZWJ77n-J3aneli6l).
 
 ## Uso
 
-
+Para usar el conjunto de datos, una vez instaladas las dependencias necesarias, tan solo tenemos que ejecutar el siguiente comando:
+```bash
+python3 main.py
+```
+A partir de ese momento, la Raspberry comenzará a grabar y detectar y clasificar semáforos. Se podrá detener la ejecución pulsando la tecla q.
 
 ## Referencias
 
-Este proyecto ha sido desarrollado usando como base el repositorio [flying-guide-dog](https://github.com/EckoTan0804/flying-guide-dog), que se corresponde con el paper:
+Este proyecto ha sido desarrollado usando como base el [repositorio](https://github.com/EdjeElectronics/TensorFlow-Lite-Object-Detection-on-Android-and-Raspberry-Pi/tree/master), cortesía de [EdjeeElectronics](https://github.com/EdjeElectronics).
+
+De igual manera, el dataset con el que se ha entrenado el modelo de clasificación de semáforos ha sido obtenido del siguiente trabajo:
 
 Tan, H., Chen, C., Luo, X., Zhang, J., Seibold, C., Yang, K., & Stiefelhagen, R. (2021, December). Flying guide dog: Walkable path discovery for the visually impaired utilizing drones and transformer-based semantic segmentation. In 2021 IEEE International Conference on Robotics and Biomimetics (ROBIO) (pp. 1123-1128). IEEE.
